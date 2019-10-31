@@ -22,32 +22,42 @@ class MapVC: UIViewController {
         ibMapView.delegate = self
         locationManager.delegate = self
         configureLocationServices()
+        addDoubleTap()
     }
     
-    func example() {
-        // Xac dinh vi tri
-        let location = CLLocationCoordinate2D(latitude: 51.50007773,
-                                              longitude: -0.1246402)
+    func addDoubleTap() {
+        let doubleTap = UITapGestureRecognizer(target: self, action: #selector(dropPin(_:)))
+        doubleTap.numberOfTapsRequired = 2
+        ibMapView.addGestureRecognizer(doubleTap)
+    }
+    
+    @objc func dropPin(_ recognizer: UITapGestureRecognizer) {
+        removePin()
+        let touchPoint = recognizer.location(in: ibMapView)
+        print(touchPoint)
+        let touchCoordinate = ibMapView.convert(touchPoint, toCoordinateFrom: ibMapView)
         
-        // Xac dinh vung hien thi voi khoang cach(span cang nho zoom cang lon)
-        let span = MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
-        let region = MKCoordinateRegion(center: location, span: span)
+        print(touchCoordinate)
+        
+        //add chấm đỏ
+        let annotation = DroppablePin(coordinate: touchCoordinate, indentifier: "droppalePin")
+        ibMapView.addAnnotation(annotation)
+//
+        //set lại center là ngay chấm đỏ đó
+        let region = MKCoordinateRegion(center: touchCoordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
         ibMapView.setRegion(region, animated: true)
         
-        // Hien thi chu thich
-        let annotation = MKPointAnnotation()
-        annotation.coordinate = location
-        annotation.title = "Big Ben"
-        annotation.subtitle = "London"
-        ibMapView.addAnnotation(annotation)
-
-        
     }
-    
 
     @IBAction func ibCenterMapBntPressed(_ sender: Any) {
         if authorizationStatus == .authorizedAlways || authorizationStatus == .authorizedWhenInUse {
             centerMapOnUserLocation()
+        }
+    }
+    
+    func removePin() {
+        for annotation in ibMapView.annotations {
+            ibMapView.removeAnnotation(annotation)
         }
     }
 }
@@ -74,5 +84,22 @@ extension MapVC: CLLocationManagerDelegate {
     }
 }
 
-
-
+extension MapVC {
+    func example() {
+        // Xac dinh vi tri
+        let location = CLLocationCoordinate2D(latitude: 51.50007773,
+                                              longitude: -0.1246402)
+        
+        // Xac dinh vung hien thi voi khoang cach(span cang nho zoom cang lon)
+        let span = MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05)
+        let region = MKCoordinateRegion(center: location, span: span)
+        ibMapView.setRegion(region, animated: true)
+        
+        // Hien thi chu thich
+        let annotation = MKPointAnnotation()
+        annotation.coordinate = location
+        annotation.title = "Big Ben"
+        annotation.subtitle = "London"
+        ibMapView.addAnnotation(annotation)
+    }
+}
