@@ -63,6 +63,19 @@ class MapVC: UIViewController {
 }
 
 extension MapVC: MKMapViewDelegate {
+    
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        
+        //kt annotation co ngay toa do cua user k
+        if annotation is MKUserLocation {
+            return nil
+        }
+        //pin thi co them animatesDrop
+        let annotation = MKPinAnnotationView(annotation: annotation, reuseIdentifier: "droppablePin")
+        annotation.pinTintColor = .orange
+        annotation.animatesDrop = true
+        return annotation
+    }
     func centerMapOnUserLocation() {
         guard let coordinate = locationManager.location?.coordinate else { return }
         let region = MKCoordinateRegion(center: coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
