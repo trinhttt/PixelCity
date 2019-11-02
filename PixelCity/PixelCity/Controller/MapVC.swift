@@ -16,12 +16,15 @@ class MapVC: UIViewController {
     @IBOutlet weak var ibMapView: MKMapView!
     @IBOutlet weak var ibPullUpView: UIView!
     
+    var screenSize = UIScreen.main.bounds
+
     var locationManager = CLLocationManager()
     let authorizationStatus = CLLocationManager.authorizationStatus()
-    
     var spinner: UIActivityIndicatorView?
     var progressLbl: UILabel?
-    var screenSize = UIScreen.main.bounds
+    
+    var flowLayout = UICollectionViewFlowLayout()
+    var collectionView: UICollectionView?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,6 +32,13 @@ class MapVC: UIViewController {
         locationManager.delegate = self
         configureLocationServices()
         addDoubleTap()
+        
+        collectionView = UICollectionView(frame: self.view.bounds, collectionViewLayout: flowLayout)
+        collectionView?.register(PhotoCell.self, forCellWithReuseIdentifier: "photoCell")
+        collectionView?.dataSource = self
+        collectionView?.delegate = self
+        collectionView?.backgroundColor = .red
+        ibPullUpView.addSubview(collectionView!)
     }
     
     func addDoubleTap() {
@@ -57,35 +67,35 @@ class MapVC: UIViewController {
         }
     }
     
-    @objc func dropPin(_ recognizer: UITapGestureRecognizer) {
-        removePin()
-        animateViewUp()
-        addSwipe()
-        addSpinner()
-        
-        let touchPoint = recognizer.location(in: ibMapView)
-        print(touchPoint)
-        let touchCoordinate = ibMapView.convert(touchPoint, toCoordinateFrom: ibMapView)
-        
-        print(touchCoordinate)
-        
-        //add chấm đỏ
-        let annotation = DroppablePin(coordinate: touchCoordinate, indentifier: "droppalePin")
-        ibMapView.addAnnotation(annotation)
-//
-        //set lại center là ngay chấm đỏ đó
-        let region = MKCoordinateRegion(center: touchCoordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
-        ibMapView.setRegion(region, animated: true)
-        
-    }
-    
     func addSpinner() {
         spinner = UIActivityIndicatorView()
         spinner?.center = CGPoint(x: screenSize.width / 2 - (spinner?.frame.width)! / 2, y: 150)
         spinner?.style = .whiteLarge
         spinner?.color = .lightGray
         spinner?.startAnimating()
-        ibPullUpView.addSubview(spinner!)
+        collectionView?.addSubview(spinner!)
+    }
+    
+    func removeSpinner() {
+        if spinner != nil {
+            spinner?.removeFromSuperview()
+        }
+    }
+    
+    func addProgressLabel() {
+        progressLbl = UILabel()
+        progressLbl?.frame = CGRect(x: screenSize.width / 2 - 120, y: 175, width: 240, height: 40)
+        progressLbl?.textColor = .lightGray
+        progressLbl?.text = "15/40 photos loaded"
+        progressLbl?.textAlignment = .center
+        progressLbl?.font = UIFont(name: "Arial", size: 18)
+        collectionView?.addSubview(progressLbl!)
+    }
+    
+    func removeProgressLabel() {
+        if progressLbl != nil {
+            progressLbl?.removeFromSuperview()
+        }
     }
 
     @IBAction func ibCenterMapBntPressed(_ sender: Any) {
@@ -120,6 +130,31 @@ extension MapVC: MKMapViewDelegate {
         let region = MKCoordinateRegion(center: coordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
         ibMapView.setRegion(region, animated: true)
     }
+    
+    @objc func dropPin(_ recognizer: UITapGestureRecognizer) {
+        removePin()
+        removeSpinner()
+        removeProgressLabel()
+        animateViewUp()
+        addSwipe()
+        addSpinner()
+        addProgressLabel()
+        
+        let touchPoint = recognizer.location(in: ibMapView)
+        print(touchPoint)
+        let touchCoordinate = ibMapView.convert(touchPoint, toCoordinateFrom: ibMapView)
+        
+        print(touchCoordinate)
+        
+        //add chấm đỏ
+        let annotation = DroppablePin(coordinate: touchCoordinate, indentifier: "droppalePin")
+        ibMapView.addAnnotation(annotation)
+        //
+        //set lại center là ngay chấm đỏ đó
+        let region = MKCoordinateRegion(center: touchCoordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
+        ibMapView.setRegion(region, animated: true)
+        
+    }
 }
 
 extension MapVC: CLLocationManagerDelegate {
@@ -133,6 +168,23 @@ extension MapVC: CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         centerMapOnUserLocation()
+    }
+}
+
+extension MapVC: UICollectionViewDelegate, UICollectionViewDataSource {
+    func numberOfSections(in collectionView: UICollectionView) -> Int {
+        return 1
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        return 4
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
+        if let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "photoCell", for: indexPath) as? PhotoCell {
+            return cell
+        }
+        return UICollectionViewCell()
     }
 }
 
