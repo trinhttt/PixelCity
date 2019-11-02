@@ -12,10 +12,16 @@ import CoreLocation
 
 class MapVC: UIViewController {
 
+    @IBOutlet weak var ibpullUpViewHeightConstant: NSLayoutConstraint!
     @IBOutlet weak var ibMapView: MKMapView!
+    @IBOutlet weak var ibPullUpView: UIView!
     
     var locationManager = CLLocationManager()
     let authorizationStatus = CLLocationManager.authorizationStatus()
+    
+    var spinner: UIActivityIndicatorView?
+    var progressLbl: UILabel?
+    var screenSize = UIScreen.main.bounds
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -31,8 +37,32 @@ class MapVC: UIViewController {
         ibMapView.addGestureRecognizer(doubleTap)
     }
     
+    func addSwipe() {
+        let swipe = UISwipeGestureRecognizer(target: self, action: #selector(animateViewDown))
+        swipe.direction = .down
+        ibPullUpView.addGestureRecognizer(swipe)
+    }
+    
+    func animateViewUp() {
+        ibpullUpViewHeightConstant.constant = 300
+        UIView.animate(withDuration: 0.3) {
+            self.view.layoutIfNeeded()
+        }
+    }
+    
+    @objc func animateViewDown() {
+        ibpullUpViewHeightConstant.constant = 0
+        UIView.animate(withDuration: 0.3) {
+            self.view.layoutIfNeeded()
+        }
+    }
+    
     @objc func dropPin(_ recognizer: UITapGestureRecognizer) {
         removePin()
+        animateViewUp()
+        addSwipe()
+        addSpinner()
+        
         let touchPoint = recognizer.location(in: ibMapView)
         print(touchPoint)
         let touchCoordinate = ibMapView.convert(touchPoint, toCoordinateFrom: ibMapView)
@@ -47,6 +77,15 @@ class MapVC: UIViewController {
         let region = MKCoordinateRegion(center: touchCoordinate, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
         ibMapView.setRegion(region, animated: true)
         
+    }
+    
+    func addSpinner() {
+        spinner = UIActivityIndicatorView()
+        spinner?.center = CGPoint(x: screenSize.width / 2 - (spinner?.frame.width)! / 2, y: 150)
+        spinner?.style = .whiteLarge
+        spinner?.color = .lightGray
+        spinner?.startAnimating()
+        ibPullUpView.addSubview(spinner!)
     }
 
     @IBAction func ibCenterMapBntPressed(_ sender: Any) {
